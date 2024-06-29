@@ -107,9 +107,7 @@ You can also specify the path to the finetuned LLM with argument `--model-dir`:
 python run_plm.py --test --plm-type llama --plm-size base --rank 128 --device cuda:0 --model-dir you_finetune_llm_dir
 ```
 
-We offer the model checkpoint of the finetuned Llama2-7b here: https://drive.google.com/file/d/17UyXJ9rGc0wKUkAhQ4wMrYDEbRPRjil0/view
-
-If you want to try our model, please download the model checkpoint and store it in `data/ft_plms/try_llama2_7b`, and run the following command:
+We offer the model checkpoint of the finetuned Llama2-7b here: https://drive.google.com/file/d/17UyXJ9rGc0wKUkAhQ4wMrYDEbRPRjil0/view. If you want to try our model, please download the model checkpoint and store it in `data/ft_plms/try_llama2_7b`, and run the following command:
 ```sh
 python run_plm.py --test --plm-type llama --plm-size base --rank 128 --device cuda:0 --model-dir  data/ft_plms/try_llama2_7b
 ```
@@ -126,3 +124,24 @@ python run_baseline.py --model bba
 
 Note: We do not provide implementation of training baselines, since we reuse their open-source model checkpoints.
 
+# Citation
+If you find this repository useful, please kindly cite the following paper:
+```
+@misc{wu2024netllm,
+      title={NetLLM: Adapting Large Language Models for Networking}, 
+      author={Duo Wu and Xianda Wang and Yaqi Qiao and Zhi Wang and Junchen Jiang and Shuguang Cui and Fangxin Wang},
+      year={2024},
+      eprint={2402.02338},
+      archivePrefix={arXiv},
+      primaryClass={cs.NI},
+      url={https://arxiv.org/abs/2402.02338}, 
+}
+
+@inproceedings{xia2022genet,
+  title={Genet: automatic curriculum generation for learning adaptation in networking},
+  author={Xia, Zhengxu and Zhou, Yajie and Yan, Francis Y and Jiang, Junchen},
+  booktitle={Proceedings of the ACM SIGCOMM 2022 Conference},
+  pages={397--413},
+  year={2022}
+}
+```
