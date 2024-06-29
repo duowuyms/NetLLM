@@ -1,0 +1,8 @@
+__pycache__
+.idea
+.vscode
+
+artifacts/results
+
+downloaded_plms
+ft_plms
