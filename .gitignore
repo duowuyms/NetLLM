@@ -2,7 +2,7 @@ __pycache__
 .idea
 .vscode
 
-artifacts/results
+results
 
 downloaded_plms
 ft_plms
