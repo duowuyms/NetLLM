@@ -96,7 +96,7 @@ def pack_data(dataset_dir, video_user_pairs, frequency, dataset, for_track=False
         
     pack_content_features = {video: {} for video, _ in video_user_pairs}
     if for_track:
-        image_data_total_path = cfg.dataset_images_360[dataset]
+        image_data_total_path = cfg.dataset_images[dataset]
         for video, user in video_user_pairs:
             image_data_path = os.path.join(image_data_total_path, f'video{video}_images')
             data_path = os.path.join(dataset_dir, f'video{video}', f'{frequency}Hz', f'simple_{frequency}Hz_user{user}.csv')
@@ -123,13 +123,10 @@ def pack_data(dataset_dir, video_user_pairs, frequency, dataset, for_track=False
             c = 1
             pre_image = None
             for image_name in image_names:
-                # print("image_name:", image_name )
-                # if c <= len(tmp_data[:, 0]):
                 if os.path.exists(image_name):
                     image = cv2.imread(image_name)
                     image = cv2.resize(image, (224, 224))
-                    # print(image_name)
-                    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # CAN IT?
+                    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
                 else:
                     gray_image = pre_image
                 pack_content_features[video][c] = gray_image
@@ -138,7 +135,7 @@ def pack_data(dataset_dir, video_user_pairs, frequency, dataset, for_track=False
     return pack_traces, pack_content_features
 
 
-def create_dataset(dataset, dataset_type, dataset_video_split=None, dataset_user_split=None,
+def create_dataset(dataset, dataset_video_split=None, dataset_user_split=None,
                    his_window=cfg.default_history_window, fut_window=cfg.default_future_window,
                    trim_head=cfg.default_trim_head, trim_tail=cfg.default_trim_tail, 
                    frequency=cfg.default_dataset_frequency, step=cfg.default_sample_step,
@@ -146,7 +143,6 @@ def create_dataset(dataset, dataset_type, dataset_video_split=None, dataset_user
     """
     Create dataset.
     :param dataset: dataset name
-    :param dataset_type: dataset type (360 or vv)
     :param dataset_video_split: train, valid, test split info of videos
     :param dataset_user_split: train, valid, test split info of users
     :param his_window: historical window
@@ -158,18 +154,11 @@ def create_dataset(dataset, dataset_type, dataset_video_split=None, dataset_user
     :param include: inclusion of the splits of dataset
     :return: dataset_train, dataset_valid, dataset_test
     """
-    if dataset_type == '360':
-        dataset_dir = cfg.dataset_360[dataset]
-        if dataset_video_split is None:
-            dataset_video_split = cfg.dataset_video_split_360[dataset]
-        if dataset_user_split is None:
-            dataset_user_split = cfg.dataset_user_split_360[dataset]
-    else:
-        dataset_dir = cfg.dataset_vv[dataset]
-        if dataset_video_split is None:
-            dataset_video_split = cfg.dataset_video_split_vv[dataset]
-        if dataset_user_split is None:
-            dataset_user_split = cfg.dataset_user_split_vv[dataset]
+    dataset_dir = cfg.dataset[dataset]
+    if dataset_video_split is None:
+        dataset_video_split = cfg.dataset_video_split[dataset]
+    if dataset_user_split is None:
+        dataset_user_split = cfg.dataset_user_split[dataset]
 
     total_video_user_pairs = []
     for split in include:

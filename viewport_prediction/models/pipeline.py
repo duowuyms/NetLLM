@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from typing import *
@@ -154,15 +155,9 @@ class Pipeline(nn.Module):
             loaded_tensor_dict = self.loaded_tensor_cache[cache_key]
         else:
             if image_index % 100 == 0:
-                if self.dataset == 'Jin2022':
-                    loaded_tensor_dict = torch.load(f'/data/data1/wuduo/2023_prompt_learning/datasets/viewport_prediction/360/Jin2022images/features/video{video_index}_images/feature_dict{(image_index//100)}.pth')
-                if self.dataset == 'Wu2017':
-                    loaded_tensor_dict = torch.load(f'/data/data1/wangxianda/get_multimodal/Wu2017_features/video{video_index}_images/feature_dict{(image_index//100)}.pth')
+                loaded_tensor_dict = torch.load(os.path.join(cfg.dataset_image_features[self.dataset], f'video{video_index}_images/feature_dict{(image_index//100)}.pth'))
             else:
-                if self.dataset == 'Jin2022':
-                    loaded_tensor_dict = torch.load(f'/data/data1/wuduo/2023_prompt_learning/datasets/viewport_prediction/360/Jin2022images/features/video{video_index}_images/feature_dict{(image_index//100)+1}.pth')
-                if self.dataset == 'Wu2017':
-                    loaded_tensor_dict = torch.load(f'/data/data1/wangxianda/get_multimodal/Wu2017_features/video{video_index}_images/feature_dict{(image_index//100)+1}.pth')
+                loaded_tensor_dict = torch.load(os.path.join(cfg.dataset_image_features[self.dataset], f'video{video_index}_images/feature_dict{(image_index//100) + 1}.pth'))
         
         self.loaded_tensor_cache[cache_key] = loaded_tensor_dict  # add to loaded_tensor_dict
         load_tensor = loaded_tensor_dict[f'{image_index}'].to(self.device)

@@ -19,19 +19,14 @@ class ResultNotebook:
     It produces a result.csv file, recording the summary information of the prediction
 
     The results.csv file structure is illustrated as follows:
-    360 video: video_id,user_id,mae,rmse
-    volumetric video: video_id,user_id,mae_trans,mae_rot,rmse_trans,rmse_rot
+    video_id,user_id,mae,rmse
     """
-    def __init__(self, dataset_type):
-        self.dataset_type = dataset_type
+    def __init__(self):
         self.prediction_record = defaultdict(list)
         self.prediction_note = _PredictionNote
 
         self.position2dimension = {}
-        if self.dataset_type == '360':
-            self.position2dimension.update({'roll': 0, 'pitch': 1, 'yaw': 2})
-        elif self.dataset_type == 'vv':
-            self.position2dimension.update({'x': 0, 'y': 1, 'z': 2, 'roll': 3, 'pitch': 4, 'yaw': 5})
+        self.position2dimension.update({'roll': 0, 'pitch': 1, 'yaw': 2})
 
     def record(self, prediction, ground_truth, videos, users, timesteps):
         prediction = prediction.cpu().numpy()
@@ -46,32 +41,17 @@ class ResultNotebook:
             self.prediction_record[video, user].append(self.prediction_note(timestep, prediction[i], ground_truth[i]))
 
     def write(self, result_path):
-        if self.dataset_type == '360':
-            header = ['video', 'user', 'mae', 'rmse', ]
-        elif self.dataset_type == 'vv':
-            header = ['video', 'user', 'mae_trans', 'mae_rot', 'rmse_trans', 'rmse_rot']
+        header = ['video', 'user', 'mae', 'rmse', ]
     
         def write_row(writer, pt, video, user, pred, gt):
-            if self.dataset_type == '360':
-                if len(pred) == 0 or len(gt) == 0:  
-                    mae, rmse = float('inf'), float('inf')
-                else:
-                    mae = compute_mae(pred, gt, rotation=True)
-                    rmse = compute_rmse(pred, gt, rotation=True)
-                writer.writerow([video, user, float(mae), float(rmse)])
-                pt.add_row([video, user, float(mae), float(rmse)])
-                return mae, rmse
-            elif self.dataset_type == 'vv':
-                if len(pred) == 0 or len(gt) == 0:  
-                    mae_trans, mae_rot, rmse_trans, rmse_rot = float('inf'), float('inf'), float('inf'), float('inf')
-                else:
-                    mae_trans = compute_mae(pred[:, :, :3], gt[:, :, :3])
-                    mae_rot = compute_mae(pred[:, :, 3:], gt[:, :, 3:], rotation=True)
-                    rmse_trans = compute_rmse(pred[:, :, :3], gt[:, :, :3])
-                    rmse_rot = compute_rmse(pred[:, :, 3:], gt[:, :, 3:], rotation=True)
-                writer.writerow([video, user, float(mae_trans), float(mae_rot), float(rmse_trans), float(rmse_rot)])
-                pt.add_row([video, user, float(mae_trans), float(mae_rot), float(rmse_trans), float(rmse_rot)])
-                return mae_trans, mae_rot, rmse_trans, rmse_rot
+            if len(pred) == 0 or len(gt) == 0:  
+                mae, rmse = float('inf'), float('inf')
+            else:
+                mae = compute_mae(pred, gt, rotation=True)
+                rmse = compute_rmse(pred, gt, rotation=True)
+            writer.writerow([video, user, float(mae), float(rmse)])
+            pt.add_row([video, user, float(mae), float(rmse)])
+            return mae, rmse
 
         with open(result_path, 'w', encoding='utf-8', newline='') as file:
             csv_writer = csv.writer(file)
@@ -120,38 +100,23 @@ class ResultNotebook:
             file.close()
 
     def write_detail(self, result_path):
-        if self.dataset_type == '360':
-            header = ['video', 'user', 'mae', 'rmse', ]
-        elif self.dataset_type == 'vv':
-            header = ['video', 'user', 'mae_trans', 'mae_rot', 'rmse_trans', 'rmse_rot']
+        header = ['video', 'user', 'mae', 'rmse', ]
     
         def write_row_detail(writer, pt, video, user, pred, gt):
-            if self.dataset_type == '360':
-                if len(pred) == 0 or len(gt) == 0:  
-                    mae, rmse = float('inf'), float('inf')
-                else:
-                    mae = compute_mae(pred, gt, rotation=True)
-                    rmse = compute_rmse(pred, gt, rotation=True)
-                    eachmae = compute_each_mae(pred, gt, rotation=True)
-                    # print(eachmae)
-                    eachrmse = compute_each_rmse(pred, gt, rotation=True)
-                # writer.writerow([video, user, float(mae), float(rmse)])
-                # pt.add_row([video, user, float(mae), float(rmse)])
-                for i in range(len(eachmae)):
-                    writer.writerow([video, user, float(eachmae[i]), float(eachrmse[i])])
-                    pt.add_row([video, user, float(eachmae[i]), float(eachrmse[i])])
-                return mae, rmse
-            elif self.dataset_type == 'vv':
-                if len(pred) == 0 or len(gt) == 0:  
-                    mae_trans, mae_rot, rmse_trans, rmse_rot = float('inf'), float('inf'), float('inf'), float('inf')
-                else:
-                    mae_trans = compute_mae(pred[:, :, :3], gt[:, :, :3])
-                    mae_rot = compute_mae(pred[:, :, 3:], gt[:, :, 3:], rotation=True)
-                    rmse_trans = compute_rmse(pred[:, :, :3], gt[:, :, :3])
-                    rmse_rot = compute_rmse(pred[:, :, 3:], gt[:, :, 3:], rotation=True)
-                writer.writerow([video, user, float(mae_trans), float(mae_rot), float(rmse_trans), float(rmse_rot)])
-                pt.add_row([video, user, float(mae_trans), float(mae_rot), float(rmse_trans), float(rmse_rot)])
-                return mae_trans, mae_rot, rmse_trans, rmse_rot
+            if len(pred) == 0 or len(gt) == 0:  
+                mae, rmse = float('inf'), float('inf')
+            else:
+                mae = compute_mae(pred, gt, rotation=True)
+                rmse = compute_rmse(pred, gt, rotation=True)
+                eachmae = compute_each_mae(pred, gt, rotation=True)
+                # print(eachmae)
+                eachrmse = compute_each_rmse(pred, gt, rotation=True)
+            # writer.writerow([video, user, float(mae), float(rmse)])
+            # pt.add_row([video, user, float(mae), float(rmse)])
+            for i in range(len(eachmae)):
+                writer.writerow([video, user, float(eachmae[i]), float(eachrmse[i])])
+                pt.add_row([video, user, float(eachmae[i]), float(eachrmse[i])])
+            return mae, rmse
 
         with open(result_path, 'w', encoding='utf-8', newline='') as file:
             csv_writer = csv.writer(file)

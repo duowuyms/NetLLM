@@ -62,33 +62,7 @@ class LinearRegression(nn.Module):
         return self.forward(history, future, tearch_forcing=False)
 
 
-def create_linear_regression(dataset_type, his_window, fut_window, device, seed):
-    model = None
-    if dataset_type == '360':
-        model = LinearRegression(in_channels=3, his_window=his_window, fut_window=fut_window, device=device, seed=seed)
-    elif dataset_type == 'vv':
-        model = LinearRegression(in_channels=6, his_window=his_window, fut_window=fut_window, device=device, seed=seed)
+def create_linear_regression(his_window, fut_window, device, seed):
+    model = LinearRegression(in_channels=3, his_window=his_window, fut_window=fut_window, device=device, seed=seed)
     return model
 
-
-def _test_linear_regression():
-    device = 'cpu'
-    in_channels, his_window, fut_window = 3, 10, 10
-    model = create_linear_regression('360', his_window, fut_window, device)
-    history = torch.rand(64, his_window, in_channels, device=device)
-    future = torch.rand(64, fut_window, in_channels, device=device)
-    pred, gt = model.inference(history, future)
-    print(pred.shape)
-    print(gt.shape)
-
-    in_channels, his_window, fut_window = 6, 10, 10
-    model = create_linear_regression('vv', his_window, fut_window, device)
-    history = torch.rand(64, his_window, in_channels, device=device)
-    future = torch.rand(64, fut_window, in_channels, device=device)
-    pred, gt = model.inference(history, future)
-    print(pred.shape)
-    print(gt.shape)
-
-
-if __name__ == '__main__':
-    _test_linear_regression()

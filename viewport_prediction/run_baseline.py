@@ -23,7 +23,6 @@ def track_train(args, model, dataloader_train, dataloader_valid, models_dir):
     train_size = len(dataloader_train)
     valid_size = len(dataloader_valid)
 
-    # best_model_path = 'qiaoyaqi_dev/qiaoyaqi_dev/viewport_prediction/tmp_bestModel/track'  # !!! need change
     best_model_path = os.path.join(models_dir, 'best_model_' + file_prefix + '.pth')
     folder_path = os.path.dirname(best_model_path)
     if not os.path.exists(folder_path):
@@ -43,8 +42,8 @@ def track_train(args, model, dataloader_train, dataloader_valid, models_dir):
         for batch,(r_his, r_fut, r_his_images, r_fut_images, _) in enumerate(dataloader_train):
             gt = r_fut.to(args.device)
             r_his, r_fut = r_his.to(args.device), r_fut[:, 0:1, :].to(args.device)
-            his, fut = normalize_data(r_his, args.train_dataset, args.dataset_type), \
-               normalize_data(r_fut, args.train_dataset, args.dataset_type)
+            his, fut = normalize_data(r_his, args.train_dataset), \
+               normalize_data(r_fut, args.train_dataset)
             his_images = torch.stack(r_his_images, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
             fut_images = torch.stack(r_fut_images, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
 
@@ -67,8 +66,8 @@ def track_train(args, model, dataloader_train, dataloader_valid, models_dir):
                 for batch, (r_his_val, r_fut_val, r_his_images_val, r_fut_images_val, _) in enumerate(dataloader_valid):
                     gt_val = r_fut_val.to(args.device)
                     r_his_val, r_fut_val = r_his_val.to(args.device), r_fut_val[:, 0:1, :].to(args.device)
-                    his_val, fut_val = normalize_data(r_his_val, args.train_dataset, args.dataset_type), \
-                        normalize_data(r_fut_val, args.train_dataset, args.dataset_type)
+                    his_val, fut_val = normalize_data(r_his_val, args.train_dataset), \
+                        normalize_data(r_fut_val, args.train_dataset)
                     his_images_val = torch.stack(r_his_images_val, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
                     fut_images_val = torch.stack(r_fut_images_val, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
 
@@ -90,7 +89,7 @@ def test(args, model, dataloader_test, models_dir, results_dir):
                   f'epochs_{args.epochs}_bs_{args.bs}_lr_{args.lr}_seed_{args.seed}'
     best_model_path = os.path.join(models_dir, 'best_model_' + file_prefix + '.pth') if args.model_path is None else args.model_path
     result_path = os.path.join(results_dir, 'result_' + file_prefix + '.csv')
-    notebook = ResultNotebook(args.dataset_type)
+    notebook = ResultNotebook()
 
     if args.model not in ['regression', 'velocity']:  # linear regression/velocity doesn't need loading model weights
         model.load_state_dict(torch.load(best_model_path, map_location=args.device))
@@ -100,23 +99,23 @@ def test(args, model, dataloader_test, models_dir, results_dir):
     with torch.no_grad():
         for raw_history, raw_future, info in tqdm(dataloader_test):
             raw_history, raw_future = raw_history.to(args.device), raw_future.to(args.device)
-            history, future = normalize_data(raw_history, args.test_dataset, args.dataset_type), \
-                normalize_data(raw_future, args.test_dataset, args.dataset_type)
+            history, future = normalize_data(raw_history, args.test_dataset), \
+                normalize_data(raw_future, args.test_dataset)
             pred, gt = model.inference(history, future)
-            pred, gt = denormalize_data(pred, args.test_dataset, args.dataset_type), \
-                denormalize_data(gt, args.test_dataset, args.dataset_type)
+            pred, gt = denormalize_data(pred, args.test_dataset), \
+                denormalize_data(gt, args.test_dataset)
             videos, users, timesteps = info[0], info[1], info[2]
             notebook.record(pred, gt, videos, users, timesteps)
         notebook.write(result_path)
 
 
-def track_test(args, model, dataloader_test,models_dir, results_dir): #results_path):
+def track_test(args, model, dataloader_test,models_dir, results_dir): 
     file_prefix = f'his_{args.his_window}_fut_{args.fut_window}_ss_{args.sample_step}_'\
                   f'epochs_{args.epochs}_bs_{args.bs}_lr_{args.lr}_seed_{args.seed}'
     best_model_path = os.path.join(models_dir, 'best_model_' + file_prefix + '.pth') if args.model_path is None else args.model_path
     result_path = os.path.join(results_dir, 'result_' + file_prefix + '.csv')
 
-    notebook = ResultNotebook(args.dataset_type)
+    notebook = ResultNotebook()
     
     if os.path.exists(best_model_path):
         model.load_state_dict(torch.load(best_model_path, map_location=args.device))
@@ -127,8 +126,8 @@ def track_test(args, model, dataloader_test,models_dir, results_dir): #results_p
         for batch, (r_his_test, r_fut_test, r_his_images_test, r_fut_images_test, info) in enumerate(dataloader_test):
             gt_test = r_fut_test.to(args.device)
             r_his_test, r_fut_test = r_his_test.to(args.device), r_fut_test[:, 0:1, :].to(args.device)
-            his_test, fut_test = normalize_data(r_his_test, args.train_dataset, args.dataset_type), \
-                 normalize_data(r_fut_test, args.train_dataset, args.dataset_type)
+            his_test, fut_test = normalize_data(r_his_test, args.train_dataset), \
+                 normalize_data(r_fut_test, args.train_dataset)
             his_images_test = torch.stack(r_his_images_test, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
             fut_images_test = torch.stack(r_fut_images_test, dim=0).permute(1, 0, 2, 3).unsqueeze(-1).to(args.device)
             pred_test = model(his_test, his_images_test, fut_test, fut_images_test)
@@ -138,9 +137,8 @@ def track_test(args, model, dataloader_test,models_dir, results_dir): #results_p
 
 
 def run(args):
-    assert args.train_dataset in cfg.dataset_list_360 or args.train_dataset in cfg.dataset_list_vv
-    assert args.test_dataset in cfg.dataset_list_360 or args.test_dataset in cfg.dataset_list_vv
-    assert args.dataset_type in ['360', 'vv']
+    assert args.train_dataset in cfg.dataset_list 
+    assert args.test_dataset in cfg.dataset_list
     assert args.model in ['regression', 'velocity', 'track']
 
     # seed
@@ -150,14 +148,14 @@ def run(args):
     torch.cuda.manual_seed_all(args.seed)
     random.seed(args.seed)
 
-    models_dir = os.path.join(cfg.models_dir, args.dataset_type, args.model, args.train_dataset, f'{args.dataset_frequency}Hz')
-    results_dir = os.path.join(cfg.results_dir, args.dataset_type, args.model, args.test_dataset, f'{args.dataset_frequency}Hz')
+    models_dir = os.path.join(cfg.models_dir, args.model, args.train_dataset, f'{args.dataset_frequency}Hz')
+    results_dir = os.path.join(cfg.results_dir, args.model, args.test_dataset, f'{args.dataset_frequency}Hz')
     if not os.path.exists(models_dir):
         os.makedirs(models_dir)
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
-    model = create_model(args.model, args.dataset_type, args.his_window, args.fut_window, args.device, args.seed).to(args.device)
+    model = create_model(args.model, args.his_window, args.fut_window, args.device, args.seed).to(args.device)
     
     if args.compile:
         assert torch.__version__ >= '2.0.0', 'Compile model requires torch version >= 2.0.0, but current torch version is ' + torch.__version__
@@ -167,7 +165,7 @@ def run(args):
     torch.set_float32_matmul_precision('high')
 
     if args.train:
-        dataset_train, dataset_valid = create_dataset(args.train_dataset, args.dataset_type, his_window=args.his_window, fut_window=args.fut_window,
+        dataset_train, dataset_valid = create_dataset(args.train_dataset, his_window=args.his_window, fut_window=args.fut_window,
                                                     frequency=args.dataset_frequency, step=args.sample_step, trim_head=args.trim_head, 
                                                     trim_tail=args.trim_tail, include=['train', 'valid'], for_track=True)
         dataloader_train = DataLoader(dataset_train, batch_size=args.bs, shuffle=True, pin_memory=True)
@@ -176,12 +174,12 @@ def run(args):
 
     if args.test:
         if args.model == 'track':
-            dataset_test = create_dataset(args.test_dataset, args.dataset_type, his_window=args.his_window, fut_window=args.fut_window, step=args.sample_step,
+            dataset_test = create_dataset(args.test_dataset, his_window=args.his_window, fut_window=args.fut_window, step=args.sample_step,
                                       frequency=args.dataset_frequency, trim_head=args.trim_head, trim_tail=args.trim_tail, include=['test'], for_track=True)[0]
             dataloader_test = DataLoader(dataset_test, batch_size=args.bs, shuffle=False, pin_memory=True)
             track_test(args, model, dataloader_test,models_dir, results_dir)
         else:
-            dataset_test = create_dataset(args.test_dataset, args.dataset_type, his_window=args.his_window, fut_window=args.fut_window, step=args.sample_step,
+            dataset_test = create_dataset(args.test_dataset, his_window=args.his_window, fut_window=args.fut_window, step=args.sample_step,
                                         frequency=args.dataset_frequency, trim_head=args.trim_head, trim_tail=args.trim_tail, include=['test'])[0]
             dataloader_test = DataLoader(dataset_test, batch_size=args.bs, shuffle=True, pin_memory=True)
             test(args, model, dataloader_test, models_dir, results_dir)
@@ -194,34 +192,29 @@ if __name__ == '__main__':
     parser.add_argument('--train', action="store_true", help='Train model.')
     parser.add_argument('--test', action="store_true", help='Test model.')
     parser.add_argument('--device', action='store', dest='device', help='Device (cuda or cpu) to run experiment.')
-    parser.add_argument('--model', action='store', dest='model', help='Model type, e.g., DVMS.')
+    parser.add_argument('--model', action='store', dest='model', help='Model type, e.g., track.')
     parser.add_argument('--compile', action='store_true', dest='compile', 
                         help='(Optional) Compile model for speed up (available only for PyTorch 2.0).')
     parser.add_argument('--resume', action='store_true', dest='resume',
                         help='(Optional) Resume model weights from checkpoint for training.')
     
     # ========== dataset settings related arguments ==========
-    # generally, the datasets for training and testing are the same.
-    # but we may want to evaluate the model generalization performance.
-    # in this way, we may train the model on one dataset and test it on another dataset.
-    # and of course, both datasets must be the same type (360 or vv).
     parser.add_argument('--train-dataset', action='store', dest='train_dataset', help='Dataset for training.')
     parser.add_argument('--test-dataset', action='store', dest='test_dataset', help='Dataset for testing.')
-    parser.add_argument('--dataset-type', action='store', dest='dataset_type', help='Type of dataset (360 or vv).')
     
     # ========== dataset loading/processing settings related arguments ==========
     parser.add_argument('--his-window', action='store', dest='his_window',
-                        help='(Optional) Historical window (default 10)', type=int)
+                        help='(Optional) Historical window', type=int)
     parser.add_argument('--fut-window', action='store', dest='fut_window',
-                        help='(Optional) Future (prediction) window (default 10).', type=int)
+                        help='(Optional) Future (prediction) window.', type=int)
     parser.add_argument('--trim-head', action='store', dest='trim_head',
-                        help='(Optional) Trim some part of the viewport trajectory head (default 30).', type=int)
+                        help='(Optional) Trim some part of the viewport trajectory head.', type=int)
     parser.add_argument('--trim-tail', action='store', dest='trim_tail',
-                        help='(Optional) Trim some part of the viewport trajectory tail (default 30).', type=int)
+                        help='(Optional) Trim some part of the viewport trajectory tail.', type=int)
     parser.add_argument('--dataset-frequency', action='store', dest='dataset_frequency',
-                        help='(Optional) The frequency version of the dataset (default 10).', type=int)
+                        help='(Optional) The frequency version of the dataset.', type=int)
     parser.add_argument('--sample-step', action='store', dest='sample_step',
-                        help='(Optional) The steps for sampling viewports (default 1).', type=int)
+                        help='(Optional) The steps for sampling viewports.', type=int)
     
     # ========== training related settings ==========
     parser.add_argument('--epochs', action="store", dest='epochs', help='(Optional) Neural network learning epochs.', type=int)
@@ -236,20 +229,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # for debug --- start
-    args.train = False
-    args.test = True
-    args.device = 'cuda:6'
-    args.train_dataset = 'Jin2022'
-    args.test_dataset = 'Jin2022'
-    args.dataset_type = '360'
-    # args.train_dataset = 'Hu2023'
-    # args.test_dataset = 'Hu2023'
-    # args.dataset_type = 'vv'
-    args.model = 'track'
-    args.epochs = 1
-    args.bs = 128 #banch size
-    args.compile = False
-    args.lr = 0.0005
+    # args.train = False
+    # args.test = True
+    # args.device = 'cuda:0'
+    # args.train_dataset = 'Jin2022'
+    # args.test_dataset = 'Jin2022'
+    # args.model = 'track'
+    # args.epochs = 1
+    # args.bs = 32  #banch size
+    # args.compile = True
+    # args.model_path = '/data-NVMeSSD/wuduo/notmuch/projects/2023_prompt_learning/NetLLM/viewport_prediction/data/models/track/pretrain.pth'
+    # args.lr = 0.0005
     # for debug --- end
 
     # handle defautl settings
@@ -270,8 +260,13 @@ if __name__ == '__main__':
         args.device = 'cpu'
         print(f'Detect model: {args.model}. Automatically disenable train and compile mode and set device to cpu.')
 
+    if args.train_dataset is None:
+        args.train_dataset = args.test_dataset
+    if args.test_dataset is None:
+        args.test_dataset = args.train_dataset
+
     # command example:
-    # python run_models.py --model track --train --test --device cuda:2 --train-dataset Jin2022 --test-dataset Jin2022 --dataset-type 360 --lr 0.0005 --bs 64 --epochs 80 --seed 1 --compile --device cuda:2 --his-window 10 --fut-window 5 --dataset-frequency 5 --sample-step 15
+    # python run_models.py --model track --train --test --device cuda:2 --train-dataset Jin2022 --test-dataset Jin2022 --lr 0.0005 --bs 64 --epochs 80 --seed 1 --compile --device cuda:2 --his-window 10 --fut-window 20 --dataset-frequency 5 --sample-step 15
 
     print(args)
     run(args)

@@ -89,7 +89,7 @@ This command will finetune Llama2 on the default experience pool we provided at 
 If you want to use your own experience pool, first use the `generate_exp_pool.py` to generate a new experience pool.
 ```sh
 conda activate abr_tf  # since we need to use baselines to interact with environments, we need to activate the baseline environment first.
-python generate_exp_pool.py --models genet --traces fcc-train --video video1 --trace-num 100 --cuda-id 0
+python generate_exp_pool.py --models genet --trace fcc-train --video video1 --trace-num 100 --cuda-id 0
 ```
 Next, specify the path to your own experience pool with argument `--exp-pool-path` and run the following command:
 ```sh
@@ -112,7 +112,7 @@ We offer the model checkpoint of the finetuned Llama2-7b here: https://drive.goo
 python run_plm.py --test --plm-type llama --plm-size base --rank 128 --device cuda:0 --model-dir  data/ft_plms/try_llama2_7b
 ```
 
-**Test baselines**
+## Run baselines
 
 To run baselines, please run:
 ```sh

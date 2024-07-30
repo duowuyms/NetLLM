@@ -51,8 +51,8 @@ def load_model(args, model, model_dir):
 
 
 def adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, grad_accum_steps):
-    file_prefix = f'his_{args.his_window}_fut_{args.fut_window}_axes_{args.num_axes}_'\
-                  f'ss_{args.sample_step}_epochs_{args.epochs}_bs_{args.bs * args.grad_accum_steps}_lr_{args.lr}_seed_{args.seed}_rank_{args.rank}_scheduled_sampling_{args.scheduled_sampling}'
+    file_prefix = f'his_{args.his_window}_fut_{args.fut_window}_ss_{args.sample_step}_epochs_{args.epochs}_bs_{args.bs * args.grad_accum_steps}_'\
+                  f'lr_{args.lr}_seed_{args.seed}_rank_{args.rank}_scheduled_sampling_{args.scheduled_sampling}'
     checkpoint_path = os.path.join(models_dir, file_prefix, 'checkpoint')
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
@@ -107,8 +107,8 @@ def adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, grad_a
             valid_loss = []
             for history, future, video_user_info in dataloader_valid:
                 history, future = history.to(args.device), future.to(args.device)
-                history = normalize_data(history, args.train_dataset, args.dataset_type)
-                future = normalize_data(future, args.train_dataset, args.dataset_type)
+                history = normalize_data(history, args.train_dataset)
+                future = normalize_data(future, args.train_dataset)
                 loss = pipeline(history, future, video_user_info, teacher_forcing=False)
                 valid_loss.append(loss.item())
             valid_loss = sum(valid_loss) / len(valid_loss)
@@ -121,8 +121,8 @@ def adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, grad_a
         for step, (history, future, video_user_info) in enumerate(dataloader_train): 
             global_step += 1
             history, future = history.to(args.device), future.to(args.device)
-            history = normalize_data(history, args.train_dataset, args.dataset_type)
-            future = normalize_data(future, args.train_dataset, args.dataset_type)
+            history = normalize_data(history, args.train_dataset)
+            future = normalize_data(future, args.train_dataset)
             # using scheduled sampling
             if args.scheduled_sampling:
                 if np.random.rand() > args.mix_rate:
@@ -147,7 +147,7 @@ def adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, grad_a
                 log_loss = tot_loss
             
             # for debug
-            # if global_step >= 200:
+            # if global_step >= 300:
             #     save_model(args, pipeline, best_model_path)
             #     break
             
@@ -189,11 +189,11 @@ def adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, grad_a
 
 
 def test(args, pipeline, dataloader_test, models_dir, results_dir):
-    file_prefix = f'his_{args.his_window}_fut_{args.fut_window}_axes_{args.num_axes}_'\
-                  f'ss_{args.sample_step}_epochs_{args.epochs}_bs_{args.bs * args.grad_accum_steps}_lr_{args.lr}_seed_{args.seed}_rank_{args.rank}_scheduled_sampling_{args.scheduled_sampling}'
+    file_prefix = f'his_{args.his_window}_fut_{args.fut_window}_axes_ss_{args.sample_step}_epochs_{args.epochs}_bs_{args.bs * args.grad_accum_steps}_'\
+                  f'lr_{args.lr}_seed_{args.seed}_rank_{args.rank}_scheduled_sampling_{args.scheduled_sampling}'
     best_model_path = os.path.join(models_dir, file_prefix, 'best_model')
     result_path = os.path.join(results_dir, file_prefix + '_results.csv')
-    notebook = ResultNotebook(args.dataset_type)
+    notebook = ResultNotebook()
 
     model_path = args.model_path if args.model_path is not None else best_model_path
     if os.path.exists(model_path):
@@ -206,9 +206,9 @@ def test(args, pipeline, dataloader_test, models_dir, results_dir):
     with torch.no_grad():
         for history, future, video_user_info in dataloader_test:
             history, future = history.to(args.device), future.to(args.device)
-            history = normalize_data(history, args.train_dataset, args.dataset_type)
+            history = normalize_data(history, args.train_dataset)
             pred, gt = pipeline.inference(history, future, video_user_info)
-            pred = denormalize_data(pred, args.test_dataset, args.dataset_type)
+            pred = denormalize_data(pred, args.test_dataset)
             videos, users, timesteps = [], [], []
             videos.append(int(video_user_info[0]))
             users.append(int(video_user_info[1]))
@@ -221,9 +221,8 @@ def test(args, pipeline, dataloader_test, models_dir, results_dir):
 
 
 def run(args):
-    assert args.train_dataset in cfg.dataset_list_360 or args.train_dataset in cfg.dataset_list_vv
-    assert args.test_dataset in cfg.dataset_list_360 or args.test_dataset in cfg.dataset_list_vv
-    assert args.dataset_type in ['360', 'vv']
+    assert args.train_dataset in cfg.dataset_list 
+    assert args.test_dataset in cfg.dataset_list
     assert args.plm_type in cfg.plm_types
     assert args.plm_size in cfg.plm_sizes
     assert args.trim_head >= args.his_window and args.trim_tail >= args.fut_window
@@ -235,14 +234,14 @@ def run(args):
     torch.cuda.manual_seed_all(args.seed)
     random.seed(args.seed)
     if args.rank != -1:
-        models_dir = os.path.join(cfg.plms_finetuned_dir, args.dataset_type, f'{args.plm_type}_{args.plm_size}_low_rank', 
+        models_dir = os.path.join(cfg.plms_finetuned_dir, f'{args.plm_type}_{args.plm_size}_low_rank', 
                               f'freeze_plm_{args.freeze_plm}', args.train_dataset, f'{args.dataset_frequency}Hz')
-        results_dir = os.path.join(cfg.results_dir, args.dataset_type, f'{args.plm_type}_{args.plm_size}_low_rank', 
+        results_dir = os.path.join(cfg.results_dir, f'{args.plm_type}_{args.plm_size}_low_rank', 
                                f'freeze_plm_{args.freeze_plm}', args.test_dataset, f'{args.dataset_frequency}Hz')
     else:
-        models_dir = os.path.join(cfg.plms_finetuned_dir, args.dataset_type, f'{args.plm_type}_{args.plm_size}', 
+        models_dir = os.path.join(cfg.plms_finetuned_dir, f'{args.plm_type}_{args.plm_size}', 
                               f'freeze_plm_{args.freeze_plm}', args.train_dataset, f'{args.dataset_frequency}Hz')
-        results_dir = os.path.join(cfg.results_dir, args.dataset_type, f'{args.plm_type}_{args.plm_size}', 
+        results_dir = os.path.join(cfg.results_dir, f'{args.plm_type}_{args.plm_size}', 
                                f'freeze_plm_{args.freeze_plm}', args.test_dataset, f'{args.dataset_frequency}Hz')
     if not os.path.exists(models_dir): 
         os.makedirs(models_dir)
@@ -253,7 +252,7 @@ def run(args):
     # For data/modules near the output side, we use args.device_out.
     # For data/modules lying in the middle, we use args.device_mid (it can be None). 
     # If args.device == args.device_out == args.device_mid (if not None), everything will be the same as using only one device.
-    plm, tokenizer, _, __ = load_plm(args.plm_type, os.path.join(cfg.plms_dir, args.plm_type, args.plm_size), plm_size=args.plm_size, 
+    plm, tokenizer, _ = load_plm(args.plm_type, os.path.join(cfg.plms_dir, args.plm_type, args.plm_size), plm_size=args.plm_size, 
                                      device_input_side=args.device, device_output_side=args.device_out, device_middle_side=args.device_mid)
     if (args.plm_type == 'opt' or args.plm_type == 'gpt2') and args.plm_size!= 'large':  # other plm can simply be loaded on one device
         plm = plm.to(args.device)
@@ -263,7 +262,7 @@ def run(args):
         
     # set up networking head
     input_dim = plm.hidden_size
-    out_dim = args.num_axes
+    out_dim = 3  # = the number of viewport coordinates
     if args.plm_type == 'opt' and args.plm_size == 'xxs':
         networking_head = NetworkingHead(input_dim=512, output_dim=out_dim, fut_window=args.fut_window).to(args.device_out)
     else:
@@ -292,7 +291,7 @@ def run(args):
         embed_size = 4096
 
     pipeline = Pipeline(plm, fut_window=args.fut_window, device=args.device, embed_size=embed_size, frequency=args.dataset_frequency, using_multimodal=args.using_multimodal, dataset=args.train_dataset)
-    print_trainable_parameters(pipeline)
+    # print_trainable_parameters(pipeline)
 
     if args.compile:
         assert torch.__version__ >= '2.0.0', 'Compile model requires torch version >= 2.0.0, but current torch version is ' + torch.__version__
@@ -302,7 +301,7 @@ def run(args):
     torch.set_float32_matmul_precision('high')
 
     if args.adapt:
-        raw_dataset_train, raw_dataset_valid = create_dataset(args.train_dataset, args.dataset_type, his_window=args.his_window, 
+        raw_dataset_train, raw_dataset_valid = create_dataset(args.train_dataset, his_window=args.his_window, 
                                                               fut_window=args.fut_window, trim_head=args.trim_head, trim_tail=args.trim_tail,
                                                               include=['train', 'valid'], frequency=args.dataset_frequency, step=args.sample_step)
         
@@ -311,7 +310,7 @@ def run(args):
         adapt(args, pipeline, dataloader_train, dataloader_valid, models_dir, args.grad_accum_steps)
 
     if args.test:
-        raw_dataset_test = create_dataset(args.test_dataset, args.dataset_type, his_window=args.his_window, fut_window=args.fut_window,
+        raw_dataset_test = create_dataset(args.test_dataset, his_window=args.his_window, fut_window=args.fut_window,
                                           trim_head=args.trim_head, trim_tail=args.trim_tail, include=['test'], frequency=args.dataset_frequency, step=args.sample_step)[0]
         
         dataloader_test = DataLoader(raw_dataset_test, batch_size=args.bs, shuffle=True, pin_memory=True)
@@ -335,18 +334,10 @@ if __name__ == '__main__':
     parser.add_argument('--resume', action='store_true', dest='resume', help='(Optional) Resume model weights from checkpoint for training.')
     
     # ========== dataset settings related arguments ==========
-    # generally, the datasets for training and testing are the same.
-    # but we may want to evaluate the model generalization performance.
-    # in this way, we may train the model on one dataset and test it on another dataset.
-    # and of course, both datasets must be the same type (360 or vv).
     parser.add_argument('--train-dataset', action='store', dest='train_dataset', help='Dataset for training.')
     parser.add_argument('--test-dataset', action='store', dest='test_dataset', help='Dataset for testing.')
-    parser.add_argument('--dataset-type', action='store', dest='dataset_type', help='Type of dataset (360 or vv).')
 
     # ========== dataset loading/processing settings related arguments ==========
-    parser.add_argument('--load-dataset-cache', action="store_true", dest='load_dataset_cache', 
-                        help='(Optional) Load dataset cache to avoid repeated dataset processing.')
-    parser.add_argument('--num-axes', action="store", dest='num_axes', help='(Optional) Number of axes.', type=int)
     parser.add_argument('--his-window', action='store', dest='his_window',
                         help='(Optional) Historical window (default 10)', type=int)
     parser.add_argument('--fut-window', action='store', dest='fut_window',
@@ -376,7 +367,7 @@ if __name__ == '__main__':
     parser.add_argument('--multimodal', action="store_true", dest='using_multimodal', help='using multimodal image features.')
     parser.add_argument('--save-checkpoint-per-epoch', action="store", dest='save_checkpoint_per_epoch', help='save checkpoint per epoch', type=int)
     parser.add_argument('--save-checkpoint-per-step', action="store", dest='save_checkpoint_per_step', help='save checkpoint per step', type=int)
-    parser.add_argument('--rank', action="store", dest='rank', help='the rank of lora model', type=int, default=-1)
+    parser.add_argument('--rank', action="store", dest='rank', help='the rank of low rank matrices', type=int, default=-1)
     parser.add_argument('--resume-path', action="store", dest='resume_path', help='using for resume')
     parser.add_argument('--scheduled-sampling', action="store_true", dest='scheduled_sampling', help='using scheduled sampling, a common method to reduce exposure bias to improve '\
                                                                                                      'sequence generation by mixing teacher-forcing generation and auto-regressive generation. '\
@@ -385,27 +376,24 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # for debug
-    args.adapt = True
-    args.test = True
-    args.device = 'cuda:1'
-    args.train_dataset = 'Jin2022'
-    args.test_dataset = 'Jin2022'
-    args.dataset_type = '360'
-    args.dataset_frequency = 5
-    args.sample_step = 30
-    args.his_window = 5
-    args.fut_window = 10
-    args.trim_head = 5
-    args.trim_tail = 10
-    args.plm_type = 'gpt2'
-    args.plm_size = 'base'
-    args.epochs = 1
-    args.bs = 1
-    args.load_dataset_cache = True
-    args.lr = 5e-4
-    args.scheduled_sampling = True
-    args.steps_per_valid = 10000
-    args.rank = 32
+    # args.adapt = True
+    # args.test = True
+    # args.device = 'cuda:5'
+    # args.train_dataset = 'Jin2022'
+    # args.test_dataset = 'Jin2022'
+    # args.dataset_frequency = 5
+    # args.sample_step = 15
+    # args.his_window = 10
+    # args.fut_window = 20
+    # args.plm_type = 'opt'
+    # args.plm_size = 'xs'
+    # args.epochs = 30
+    # args.bs = 1
+    # args.lr = 5e-4
+    # args.scheduled_sampling = True
+    # args.steps_per_valid = 500
+    # args.rank = 32
+    # args.seed = 1
 
     # handle defautl settings
     args.his_window = cfg.default_history_window if args.his_window is None else args.his_window
@@ -421,12 +409,14 @@ if __name__ == '__main__':
     args.grad_accum_steps = cfg.default_grad_accum_step if args.grad_accum_steps is None else args.grad_accum_steps
     args.steps_per_valid = cfg.default_steps_per_valid if args.steps_per_valid is None else args.steps_per_valid
 
-    if args.num_axes is None:
-        args.num_axes = 3 if args.dataset_type == '360' else 6
-        print('Detect num_axes = None. Automatically set num_axes according to dataset type.')
     
     if args.device_out is None:  
         args.device_out = args.device
+
+    if args.train_dataset is None:
+        args.train_dataset = args.test_dataset
+    if args.test_dataset is None:
+        args.test_dataset = args.train_dataset
 
     print(args)
     run(args)
