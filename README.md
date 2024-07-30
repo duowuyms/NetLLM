@@ -6,7 +6,7 @@ We will release the codes of our paper here. This may take some time. Please sta
 
 TODO List:
 - [x] Open source ABR
-- [ ] Open source VP
+- [x] Open source VP
 - [ ] Open source CJS
 
 
