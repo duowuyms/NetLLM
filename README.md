@@ -41,26 +41,15 @@ By default, we use Llama2-7B as the LLM and then use NetLLM to adapt it for thre
 If you find this repository useful, please cite our paper:
 
 > @inproceedings{wu2024netllm,
->
-> ​      author = {Wu, Duo and Wang, Xianda and Qiao, Yaqi and Wang, Zhi and Jiang, Junchen and Cui, Shuguang and Wang, Fangxin},
->
-> ​      title = {NetLLM: Adapting Large Language Models for Networking},
->
-> ​      year = {2024},
->
-> ​      publisher = {Association for Computing Machinery},
->
-> ​      address = {New York, NY, USA},
->
-> ​      doi = {10.1145/3651890.3672268},
->
-> ​      booktitle = {Proceedings of the ACM SIGCOMM 2024 Conference},
->
-> ​      pages = {661–678},
->
-> ​      numpages = {18},
->
-> ​      location = {Sydney, NSW, Australia},
->
-> ​      series = {ACM SIGCOMM '24}
+>       author = {Wu, Duo and Wang, Xianda and Qiao, Yaqi and Wang, Zhi and Jiang, Junchen and Cui, Shuguang and Wang, Fangxin},
+>       title = {NetLLM: Adapting Large Language Models for Networking},
+>       year = {2024},
+>       publisher = {Association for Computing Machinery},
+>       address = {New York, NY, USA},
+>       doi = {10.1145/3651890.3672268},
+>       booktitle = {Proceedings of the ACM SIGCOMM 2024 Conference},
+>       pages = {661–678},
+>       numpages = {18},
+>       location = {Sydney, NSW, Australia},
+>       series = {ACM SIGCOMM '24}
 > }
