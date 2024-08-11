@@ -127,14 +127,18 @@ Note: We do not provide implementation of training baselines, since we reuse the
 # Citation
 If you find this repository useful, please kindly cite the following paper:
 ```
-@misc{wu2024netllm,
-      title={NetLLM: Adapting Large Language Models for Networking}, 
-      author={Duo Wu and Xianda Wang and Yaqi Qiao and Zhi Wang and Junchen Jiang and Shuguang Cui and Fangxin Wang},
-      year={2024},
-      eprint={2402.02338},
-      archivePrefix={arXiv},
-      primaryClass={cs.NI},
-      url={https://arxiv.org/abs/2402.02338}, 
+@inproceedings{wu2024netllm,
+      author = {Wu, Duo and Wang, Xianda and Qiao, Yaqi and Wang, Zhi and Jiang, Junchen and Cui, Shuguang and Wang, Fangxin},
+      title = {NetLLM: Adapting Large Language Models for Networking},
+      year = {2024},
+      publisher = {Association for Computing Machinery},
+      address = {New York, NY, USA},
+      doi = {10.1145/3651890.3672268},
+      booktitle = {Proceedings of the ACM SIGCOMM 2024 Conference},
+      pages = {661–678},
+      numpages = {18},
+      location = {Sydney, NSW, Australia},
+      series = {ACM SIGCOMM '24}
 }
 
 @inproceedings{xia2022genet,
