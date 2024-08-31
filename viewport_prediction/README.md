@@ -44,11 +44,9 @@ consumption of video transmission. To accomplish this, the VP model predicts vie
 # Dataset download
 We have provided the cooked viewport datasets Jin2022 and Wu2017 in this repo. 
 
-The images or image features of the viewport datasets need to be manually downloaded. The download link is here: TODO.
+The images or image features of the viewport datasets need to be manually downloaded. The download link is here: [image_datasets](https://cuhko365-my.sharepoint.com/:f:/g/personal/223015061_link_cuhk_edu_cn/Es2wxUodbWNDvpTb0Vk3zQwBrbq4aaxTLuVVp2jUtroXsA?e=zPgYvu).
 
 After downloading the datasets, please put the image datasets into `data/images`, and image feature datasets into `data/image_features`.
-
-*Note: The image datasets are too large. We will find a way to upload them soon. At present, you can just try our codes without using the image datasets.*
 
 # Environment Setup
 ## Environment for NetLLM
