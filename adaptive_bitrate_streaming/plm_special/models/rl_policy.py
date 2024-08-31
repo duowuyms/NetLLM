@@ -205,7 +205,7 @@ class OfflineRLPolicy(nn.Module):
         # compute action embeddings 
         action_tensor = torch.zeros(1, 1, 1, dtype=torch.float32, device=self.device)
         action_tensor[..., 0] = (bitrate + 1) / self.bitrate_levels
-        action_embeddings = self.embed_action(action_tensor)
+        action_embeddings = self.embed_action(action_tensor) + time_embeddings
         
         # update deques
         self.returns_dq.append(return_embeddings)
