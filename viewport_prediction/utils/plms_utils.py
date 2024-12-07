@@ -8,7 +8,6 @@ import math
 from typing import List, Optional
 from collections import namedtuple
 from yacs.config import CfgNode
-from openprompt.utils.logging import logger
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers import BertConfig, BertTokenizer, BertForNextSentencePrediction, BertForMaskedLM, BertLMHeadModel,\
@@ -26,6 +25,7 @@ from models.gpt2 import GPT2NetworkingHeadModel
 from models.llama import LlamaNetworkingHeadModel
 from models.mistral import MistralNetworkingHeadModel
 from models.opt import OptNetworkingHeadModel
+                        
                         
 ModelClass = namedtuple("ModelClass", ('config', 'tokenizer', 'model'))
 
@@ -217,5 +217,5 @@ def add_special_tokens(model: PreTrainedModel,
             if tokenizer.pad_token is None:
                 tokenizer.add_special_tokens({'pad_token': token})
                 model.resize_token_embeddings(len(tokenizer))
-                logger.info("pad token is None, set to id {}".format(tokenizer.pad_token_id))
+                print("pad token is None, set to id {}".format(tokenizer.pad_token_id))
     return model, tokenizer

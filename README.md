@@ -1,6 +1,6 @@
 # NetLLM
 
-Hi! This is the official repository of SIGCOMM 2024 paper "[NetLLM: Adapting Large Language Models for Networking](https://arxiv.org/abs/2402.02338)".
+Hi! This is the official repository of SIGCOMM 2024 paper "[NetLLM: Adapting Large Language Models for Networking](https://dl.acm.org/doi/abs/10.1145/3651890.3672268)".
 
 ## Abstract
 
@@ -34,7 +34,7 @@ By default, we use Llama2-7B as the LLM and then use NetLLM to adapt it for thre
 
 ## Contributors
 
-[Duo Wu](https://duowuyms.github.io/), [Xianda Wang](https://github.com/wangxiandabetter), [Yaqi Qiao](https://github.com/qyqyq77)
+[Duo Wu](https://duowuyms.github.io/), [Xianda Wang](https://github.com/wangxiandabetter), [Yaqi Qiao](https://github.com/qyqyq77), [Linjia Kang](https://github.com/xiaogou1234)
 
 ## Citation
 

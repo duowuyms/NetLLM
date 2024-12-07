@@ -8,10 +8,6 @@ import math
 from typing import List, Optional
 from collections import namedtuple
 from yacs.config import CfgNode
-from openprompt.plms.mlm import MLMTokenizerWrapper
-from openprompt.plms.lm import LMTokenizerWrapper
-from openprompt.plms.seq2seq import T5LMTokenizerWrapper, T5TokenizerWrapper
-from openprompt.utils.logging import logger
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers import BertConfig, BertTokenizer, BertLMHeadModel,\
@@ -33,80 +29,68 @@ from plm_special.models.opt import OPTModel
 from plm_special.models.t5 import T5Model
 
                         
-ModelClass = namedtuple("ModelClass", ('config', 'tokenizer', 'model','wrapper'))
+ModelClass = namedtuple("ModelClass", ('config', 'tokenizer', 'model'))
 
 _MODEL_CLASSES = {
     'bert': ModelClass(**{
         'config': BertConfig,
         'tokenizer': BertTokenizer,
         'model':BertLMHeadModel,
-        'wrapper': LMTokenizerWrapper,
     }),
     'roberta': ModelClass(**{
         'config': RobertaConfig,
         'tokenizer': RobertaTokenizer,
-        'model': RobertaForCausalLM,
-        'wrapper': LMTokenizerWrapper
+        'model': RobertaForCausalLM
     }),
     'albert': ModelClass(**{
         'config': AlbertConfig,
         'tokenizer': AlbertTokenizer,
         'model': AlbertForMaskedLM,
-        'wrapper': MLMTokenizerWrapper
     }),
     'gpt': ModelClass(**{
         'config': OpenAIGPTConfig,
         'tokenizer': OpenAIGPTTokenizer,
-        'model': OpenAIGPTLMHeadModel,
-        'wrapper': LMTokenizerWrapper
+        'model': OpenAIGPTLMHeadModel
     }),
     'gpt2': ModelClass(**{
         'config': GPT2Config,
         'tokenizer': GPT2Tokenizer,
         'model': GPT2Model,
-        'wrapper': LMTokenizerWrapper
     }),
     't5':ModelClass(**{
         'config': T5Config,
         'tokenizer': T5Tokenizer,
         'model': T5ForConditionalGeneration,
-        'wrapper': T5TokenizerWrapper
     }),
     't5-lm':ModelClass(**{
         'config': T5Config,
         'tokenizer': T5Tokenizer,
         'model': T5Model,
-        'wrapper': T5LMTokenizerWrapper,
     }),
     'opt': ModelClass(**{
         'config': OPTConfig,
         'tokenizer': GPT2Tokenizer,
         'model': OPTModel,
-        'wrapper': LMTokenizerWrapper,
     }),
     'electra': ModelClass(**{
         'config': ElectraConfig,
         'tokenizer': ElectraTokenizer,
         'model': ElectraForMaskedLM,
-        'wrapper': MLMTokenizerWrapper,
     }),
     "gptj": ModelClass(**{
         "config": GPTJConfig, 
         "tokenizer": GPT2Tokenizer, 
         "model": GPTJForCausalLM,
-        "wrapper": LMTokenizerWrapper
     }),
     "llama": ModelClass(**{
         "config": LlamaConfig,
         "tokenizer": LlamaTokenizer,
         "model": LlamaModel,
-        "wrapper": LMTokenizerWrapper
     }),
     "mistral": ModelClass(**{
         "config": MistralConfig,
         "tokenizer": LlamaTokenizerFast,
         "model": MistralModel,
-        "wrapper": LMTokenizerWrapper
     }),
 }
 
@@ -148,7 +132,6 @@ def load_plm(model_name, model_path, specials_to_add = None, **kwargs):
         :obj:`PreTrainedModel`: The pretrained model.
         :obj:`tokenizer`: The pretrained tokenizer.
         :obj:`model_config`: The config of the pretrained model.
-        :obj:`wrapper`: The wrapper class of this plm.
     """
     model_class = get_model_class(plm_type = model_name)
     model_config = model_class.config.from_pretrained(model_path)
@@ -175,12 +158,11 @@ def load_plm(model_name, model_path, specials_to_add = None, **kwargs):
     tokenizer = model_class.tokenizer.from_pretrained(model_path) 
     print("If tokenizer is loaded: ",tokenizer.encode("hello world"),"\n")
 
-    wrapper = model_class.wrapper
     model, tokenizer = add_special_tokens(model, tokenizer, specials_to_add=specials_to_add)
     
     if 'opt' in model_name:
         tokenizer.add_bos_token=False
-    return model, tokenizer, model_config, wrapper
+    return model, tokenizer, model_config
 
 
 def load_plm_from_config(config: CfgNode):
@@ -194,7 +176,6 @@ def load_plm_from_config(config: CfgNode):
         :obj:`PreTrainedModel`: The pretrained model.
         :obj:`tokenizer`: The pretrained tokenizer.
         :obj:`model_config`: The config of the pretrained model.
-        :obj:`model_config`: The wrapper class of this plm.
     """
     plm_config = config.plm
     model_class = get_model_class(plm_type = plm_config.model_name)
@@ -205,9 +186,8 @@ def load_plm_from_config(config: CfgNode):
             config.plm.specials_to_add.append("<pad>")
     model = model_class.model.from_pretrained(plm_config.model_path, config=model_config)
     tokenizer = model_class.tokenizer.from_pretrained(plm_config.model_path)
-    wrapper = model_class.wrapper
     model, tokenizer = add_special_tokens(model, tokenizer, specials_to_add=config.plm.specials_to_add)
-    return model, tokenizer, model_config, wrapper
+    return model, tokenizer, model_config
 
 
 def add_special_tokens(model: PreTrainedModel,
@@ -233,5 +213,5 @@ def add_special_tokens(model: PreTrainedModel,
             if tokenizer.pad_token is None:
                 tokenizer.add_special_tokens({'pad_token': token})
                 model.resize_token_embeddings(len(tokenizer))
-                logger.info("pad token is None, set to id {}".format(tokenizer.pad_token_id))
+                print("pad token is None, set to id {}".format(tokenizer.pad_token_id))
     return model, tokenizer
