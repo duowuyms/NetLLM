@@ -1,0 +1,43 @@
+agent:
+  agent_cls: 'DecimaScheduler'
+  embed_dim: 16
+  gnn_mlp_kwargs:
+    hid_dims: [32, 16]
+    act_cls: 'LeakyReLU'
+    act_kwargs:
+      inplace: True
+      negative_slope: .2
+  policy_mlp_kwargs:
+    hid_dims: [64, 64]
+    act_cls: 'Tanh'
+  state_dict_path: models/decima/model.pt
+env:
+  num_executors: 50  # wuduo: total number of available executors in the clusters
+  job_arrival_cap: 200  # wuduo: the total number of jobs
+  job_arrival_rate: 4.e-5 
+  moving_delay: 2000.
+  warmup_delay: 1000.
+  dataset: 'tpch'
+  mean_time_limit: 2.e+7
+trainer:
+  device: 'cuda:0'
+  trainer_cls: 'PPO'
+  seed: 2000
+  num_iterations: 500
+  num_sequences: 4
+  num_rollouts: 4
+  artifacts_dir: 'artifacts'
+  checkpointing_freq: 50
+  use_tensorboard: False
+  num_epochs: 3
+  num_batches: 10
+  clip_range: .2
+  target_kl: .01
+  entropy_coeff: .04
+  beta_discount: 5.e-3      # discounted returns
+  # reward_buff_cap: 200000 # differential returns
+  opt_cls: 'Adam'
+  opt_kwargs: 
+    lr: 3.e-4
+  max_grad_norm: .5
+    

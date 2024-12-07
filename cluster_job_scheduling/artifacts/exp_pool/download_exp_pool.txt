@@ -1,0 +1,3 @@
+The default experience pool file is too large to directly upload on github.
+Please download it with the following dropbox link:
+https://www.dropbox.com/scl/fi/nraefvpv63vdj5yseiivy/exp_pool.pkl?rlkey=25v5bvm9ap4ap8mjoir93mih0&st=rysrmhrt&dl=0
